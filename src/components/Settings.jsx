@@ -16,18 +16,16 @@ export default function Settings({ storeName, setStoreName }) {
   //effects
   //load settings function to get current settings
   const loadSettings = async () => {
-    const [rate, methods, symbol, types, restoName] = await Promise.all([
+    const [rate, methods, symbol, types] = await Promise.all([
       getSetting("taxRate"),
       getSetting("paymentMethods"),
       getSetting("currencySymbol"),
       getSetting("diningTypes"),
-      //getSetting("storeName"),
     ]);
-    setTaxRate(rate);
+    setTaxRate(rate * 100);
     setCurrencySymbol(symbol);
     setDiningTypes(types);
     setPaymentMethods(methods);
-    //setStoreName(restoName);
   };
 
   useEffect(() => {
@@ -72,7 +70,7 @@ export default function Settings({ storeName, setStoreName }) {
   //handles saving of settings
   const handleSaveSettings = async () => {
     await setSettings({
-      taxRate,
+      taxRate: taxRate / 100,
       currencySymbol,
       diningTypes,
       paymentMethods,
@@ -93,6 +91,17 @@ export default function Settings({ storeName, setStoreName }) {
           value={storeName}
           onChange={(e) => setStoreName(e.target.value)}
           placeholder="Enter Store Name Here"
+        />
+      </div>
+
+      {/* Tax Rates */}
+      <div className="settings-sections">
+        <h3>Tax Rate</h3>
+        <input
+          type="text"
+          value={taxRate}
+          onChange={(e) => setTaxRate(e.target.value)}
+          placeholder="Enter Tax Rate (in Percentage)"
         />
       </div>
 
