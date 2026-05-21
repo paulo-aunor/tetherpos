@@ -741,3 +741,27 @@ td {
   padding: 20px;
   overflow-y: auto;
 }
+
+/* styling for demo data. Applicable in Demo Mode only */
+
+.demo-banner {
+  background: #fef3c7;
+  color: #92400e;
+  padding: 10px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 14px;
+  font-weight: 500;
+  border-bottom: 1px solid #fcd34d;
+}
+
+.demo-banner button {
+  padding: 6px 12px;
+  background: #92400e;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+}
