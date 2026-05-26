@@ -185,11 +185,28 @@ export const seedDemoData = async () => {
   await setSetting("demo_mode", true);
 };
 
-//resets the demo data from the localDB and waits for another batch of demodata
-export const resetDemoData = async () => {
+//clears menuItems, inventory, and transactions tables
+const clearAllTables = async () => {
   await db.menuItems.clear();
   await db.inventory.clear();
   await db.transactions.clear();
+};
+
+//resets the demo data from the localDB and waits for another batch of demodata
+export const resetDemoData = async () => {
+  await clearAllTables();
   await setSetting("demo_mode", false);
   await seedDemoData();
+};
+
+//exits demo mode, resets the data and sets the goLiveDate
+export const exitDemoMode = async () => {
+  await clearAllTables();
+  await setSetting("demo_mode", false);
+  await setSetting("goLiveDate", new Date().toISOString());
+};
+
+//clears all data. Works in tandem with exitDemoMode
+export const clearAllData = async () => {
+  await clearAllTables();
 };
