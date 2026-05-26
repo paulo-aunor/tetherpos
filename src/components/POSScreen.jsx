@@ -7,7 +7,7 @@ import { saveTransaction } from "../db/transactionDb";
 import { getSetting } from "../db/settingsDb";
 
 //component
-export default function POSScreen() {
+export default function POSScreen({ demoMode, onResetDemo, isDbReady }) {
   //state
   //all menu items from the database
   const [menuItems, setMenuItems] = useState([]);
@@ -68,9 +68,10 @@ export default function POSScreen() {
   };
 
   useEffect(() => {
+    if (!isDbReady) return;
     loadMenuData();
     loadSettings();
-  }, []);
+  }, [isDbReady]);
 
   //derived state
 
@@ -254,285 +255,294 @@ export default function POSScreen() {
 
   //render
   return (
-    <div className="pos-screen">
-      {/* ── Left side — menu browser ── */}
-      <div className="pos-menu">
-        {/* Search box — primary way to find items */}
-        <input
-          type="text"
-          placeholder="Search menu items..."
-          value={searchText}
-          onChange={(e) => setSearchText(e.target.value)}
-          className="pos-search"
-        />
-
-        {/* Category filter buttons */}
-        <div className="pos-categories">
-          {/* All button — clears category filter */}
-          <button
-            className={activeCategory === "All" ? "active" : ""}
-            onClick={() => setActiveCategory("All")}
-          >
-            All
-          </button>
-
-          {/* one button per category from the database */}
-          {categories.map((cat) => (
-            <button
-              key={cat}
-              className={activeCategory === cat ? "active" : ""}
-              onClick={() => setActiveCategory(cat)}
-            >
-              {cat}
-            </button>
-          ))}
+    <>
+      {/*Banner to show that the POS is in Demo Mode*/}
+      {demoMode && (
+        <div className="demo-banner">
+          Demo mode - sample data loaded
+          <button onClick={onResetDemo}>Reset Demo</button>
         </div>
+      )}
+      <div className="pos-screen">
+        {/* ── Left side — menu browser ── */}
+        <div className="pos-menu">
+          {/* Search box — primary way to find items */}
+          <input
+            type="text"
+            placeholder="Search menu items..."
+            value={searchText}
+            onChange={(e) => setSearchText(e.target.value)}
+            className="pos-search"
+          />
 
-        {/* Item grid — filtered results */}
-        <div className="pos-items">
-          {filteredItems.length === 0 && <p>No items found.</p>}
-
-          {filteredItems.map((item) => (
+          {/* Category filter buttons */}
+          <div className="pos-categories">
+            {/* All button — clears category filter */}
             <button
-              key={item.sku}
-              className="pos-item-btn"
-              onClick={() => handleAddToCart(item)}
+              className={activeCategory === "All" ? "active" : ""}
+              onClick={() => setActiveCategory("All")}
             >
-              <span className="item-name">{item.name}</span>
-              <span className="item-price">
-                {/* toFixed(2) formats the number to 2 decimal places */}
-                {currencySymbol}
-                {item.price.toFixed(2)}
-              </span>
+              All
             </button>
-          ))}
-        </div>
-      </div>
 
-      {/* ── Right side — cart ── */}
-      <div className="pos-cart">
-        <h3>Cart</h3>
-        {/* Dining type selector */}
-        <div className="dining-type-selector">
-          {diningTypes.map((type) => (
-            <button
-              key={type}
-              className={diningType === type ? "active" : ""}
-              onClick={() => setDiningType(type)}
-            >
-              {type}
-            </button>
-          ))}
-        </div>
-
-        {/* Customer name — optional */}
-        <input
-          type="text"
-          placeholder="Customer name (optional)"
-          value={customerName}
-          onChange={(e) => setCustomerName(e.target.value)}
-          className="customer-name-input"
-        />
-        {cart.length === 0 && (
-          <p className="cart-empty">
-            No items in cart. Search or browse to add items.
-          </p>
-        )}
-
-        {/* cart items */}
-        <div className="cart-items">
-          {cart.map((item) => (
-            <div key={item.sku} className="cart-item">
-              <div className="cart-item-name">{item.name}</div>
-              <div className="cart-item-controls">
-                {/* quantity input — cashier can type directly */}
-                <input
-                  type="number"
-                  min="1"
-                  value={item.quantity}
-                  onChange={(e) =>
-                    handleQuantityChange(item.sku, e.target.value)
-                  }
-                  className="cart-qty-input"
-                />
-                <span className="cart-item-total">
-                  {currencySymbol}
-                  {item.itemTotal.toFixed(2)}
-                </span>
-                {/* × button removes the item from the cart */}
-                <button
-                  className="cart-remove-btn"
-                  onClick={() => handleRemoveFromCart(item.sku)}
-                >
-                  ×
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* totals section */}
-        {cart.length > 0 && (
-          <div className="cart-totals">
-            <div className="cart-total-row">
-              <span>Subtotal</span>
-              <span>
-                {currencySymbol}
-                {subtotal.toFixed(2)}
-              </span>
-            </div>
-
-            {/* only show tax row when tax is enabled */}
-            {taxRate > 0 && (
-              <div className="cart-total-row">
-                <span>Tax ({(taxRate * 100).toFixed(0)}%)</span>
-                <span>
-                  {currencySymbol}
-                  {taxAmount.toFixed(2)}
-                </span>
-              </div>
-            )}
-
-            {/* only show discount row when discount is applied */}
-            {discountAmount > 0 && (
-              <div className="cart-total-row">
-                <span>Discount</span>
-                <span>
-                  -{currencySymbol}
-                  {discountAmount.toFixed(2)}
-                </span>
-              </div>
-            )}
-
-            <div className="cart-total-row total">
-              <strong>Total</strong>
-              <strong>
-                {currencySymbol}
-                {total.toFixed(2)}
-              </strong>
-            </div>
-          </div>
-        )}
-
-        {/* error message */}
-        {error && <p className="cart-error">⚠️ {error}</p>}
-
-        {/* cart action buttons */}
-        {!showPayment && !saleComplete && (
-          <div className="cart-actions">
-            <button onClick={handleClearCart} disabled={cart.length === 0}>
-              Clear Cart
-            </button>
-            <button
-              onClick={handleShowPayment}
-              disabled={cart.length === 0}
-              className="charge-btn"
-            >
-              Charge {currencySymbol}
-              {total.toFixed(2)}
-            </button>
-          </div>
-        )}
-
-        {/* ── Payment panel ── */}
-        {/* only shows after Charge is clicked */}
-        {showPayment && !saleComplete && (
-          <div className="payment-panel">
-            <h4>Payment</h4>
-
-            {/* payment method selector */}
-            <div className="payment-methods">
-              {paymentMethods.map((method) => (
-                <button
-                  key={method.id}
-                  className={paymentMethod === method.id ? "active" : ""}
-                  onClick={() => {
-                    setPaymentMethod(method.id);
-                    // clear tendered amount when switching payment methods
-                    setAmountTendered("");
-                    setError(null);
-                  }}
-                >
-                  {method.label}
-                </button>
-              ))}
-            </div>
-
-            {/* cash tendered input — only shows for cash payment */}
-            {paymentMethod === "cash" && (
-              <div className="cash-tendered">
-                <label>Amount Tendered</label>
-                <input
-                  type="number"
-                  placeholder="0.00"
-                  value={amountTendered}
-                  onChange={(e) => setAmountTendered(e.target.value)}
-                />
-                {/* show change due as soon as tendered >= total */}
-                {Number(amountTendered) >= total && (
-                  <div className="change-due">
-                    <strong>
-                      Change Due: {currencySymbol}
-                      {changeDue.toFixed(2)}
-                    </strong>
-                  </div>
-                )}
-              </div>
-            )}
-
-            <div className="payment-actions">
-              <button onClick={() => setShowPayment(false)}>Back</button>
+            {/* one button per category from the database */}
+            {categories.map((cat) => (
               <button
-                className="complete-sale-btn"
-                onClick={handleCompleteSale}
+                key={cat}
+                className={activeCategory === cat ? "active" : ""}
+                onClick={() => setActiveCategory(cat)}
               >
-                Complete Sale
+                {cat}
+              </button>
+            ))}
+          </div>
+
+          {/* Item grid — filtered results */}
+          <div className="pos-items">
+            {filteredItems.length === 0 && <p>No items found.</p>}
+
+            {filteredItems.map((item) => (
+              <button
+                key={item.sku}
+                className="pos-item-btn"
+                onClick={() => handleAddToCart(item)}
+              >
+                <span className="item-name">{item.name}</span>
+                <span className="item-price">
+                  {/* toFixed(2) formats the number to 2 decimal places */}
+                  {currencySymbol}
+                  {item.price.toFixed(2)}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* ── Right side — cart ── */}
+        <div className="pos-cart">
+          <h3>Cart</h3>
+          {/* Dining type selector */}
+          <div className="dining-type-selector">
+            {diningTypes.map((type) => (
+              <button
+                key={type}
+                className={diningType === type ? "active" : ""}
+                onClick={() => setDiningType(type)}
+              >
+                {type}
+              </button>
+            ))}
+          </div>
+
+          {/* Customer name — optional */}
+          <input
+            type="text"
+            placeholder="Customer name (optional)"
+            value={customerName}
+            onChange={(e) => setCustomerName(e.target.value)}
+            className="customer-name-input"
+          />
+          {cart.length === 0 && (
+            <p className="cart-empty">
+              No items in cart. Search or browse to add items.
+            </p>
+          )}
+
+          {/* cart items */}
+          <div className="cart-items">
+            {cart.map((item) => (
+              <div key={item.sku} className="cart-item">
+                <div className="cart-item-name">{item.name}</div>
+                <div className="cart-item-controls">
+                  {/* quantity input — cashier can type directly */}
+                  <input
+                    type="number"
+                    min="1"
+                    value={item.quantity}
+                    onChange={(e) =>
+                      handleQuantityChange(item.sku, e.target.value)
+                    }
+                    className="cart-qty-input"
+                  />
+                  <span className="cart-item-total">
+                    {currencySymbol}
+                    {item.itemTotal.toFixed(2)}
+                  </span>
+                  {/* × button removes the item from the cart */}
+                  <button
+                    className="cart-remove-btn"
+                    onClick={() => handleRemoveFromCart(item.sku)}
+                  >
+                    ×
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* totals section */}
+          {cart.length > 0 && (
+            <div className="cart-totals">
+              <div className="cart-total-row">
+                <span>Subtotal</span>
+                <span>
+                  {currencySymbol}
+                  {subtotal.toFixed(2)}
+                </span>
+              </div>
+
+              {/* only show tax row when tax is enabled */}
+              {taxRate > 0 && (
+                <div className="cart-total-row">
+                  <span>Tax ({(taxRate * 100).toFixed(0)}%)</span>
+                  <span>
+                    {currencySymbol}
+                    {taxAmount.toFixed(2)}
+                  </span>
+                </div>
+              )}
+
+              {/* only show discount row when discount is applied */}
+              {discountAmount > 0 && (
+                <div className="cart-total-row">
+                  <span>Discount</span>
+                  <span>
+                    -{currencySymbol}
+                    {discountAmount.toFixed(2)}
+                  </span>
+                </div>
+              )}
+
+              <div className="cart-total-row total">
+                <strong>Total</strong>
+                <strong>
+                  {currencySymbol}
+                  {total.toFixed(2)}
+                </strong>
+              </div>
+            </div>
+          )}
+
+          {/* error message */}
+          {error && <p className="cart-error">⚠️ {error}</p>}
+
+          {/* cart action buttons */}
+          {!showPayment && !saleComplete && (
+            <div className="cart-actions">
+              <button onClick={handleClearCart} disabled={cart.length === 0}>
+                Clear Cart
+              </button>
+              <button
+                onClick={handleShowPayment}
+                disabled={cart.length === 0}
+                className="charge-btn"
+              >
+                Charge {currencySymbol}
+                {total.toFixed(2)}
               </button>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* ── Sale complete screen ── */}
-        {saleComplete && (
-          <div className="sale-complete">
-            <h3>✅ Sale Complete</h3>
-            <p>
-              Total:{" "}
-              <strong>
-                {currencySymbol}
-                {total.toFixed(2)}
-              </strong>
-            </p>
-            <p>
-              Payment:{" "}
-              <strong>
-                {paymentMethods.find((m) => m.id === paymentMethod)?.label}
-              </strong>
-            </p>
-            {paymentMethod === "cash" && (
-              <>
-                <p>
-                  Tendered:{" "}
-                  <strong>
-                    {currencySymbol}
-                    {Number(amountTendered).toFixed(2)}
-                  </strong>
-                </p>
-                <p>
-                  Change:{" "}
-                  <strong>
-                    {currencySymbol}
-                    {changeDue.toFixed(2)}
-                  </strong>
-                </p>
-              </>
-            )}
-            <button className="new-sale-btn" onClick={handleNewSale}>
-              New Sale
-            </button>
-          </div>
-        )}
+          {/* ── Payment panel ── */}
+          {/* only shows after Charge is clicked */}
+          {showPayment && !saleComplete && (
+            <div className="payment-panel">
+              <h4>Payment</h4>
+
+              {/* payment method selector */}
+              <div className="payment-methods">
+                {paymentMethods.map((method) => (
+                  <button
+                    key={method.id}
+                    className={paymentMethod === method.id ? "active" : ""}
+                    onClick={() => {
+                      setPaymentMethod(method.id);
+                      // clear tendered amount when switching payment methods
+                      setAmountTendered("");
+                      setError(null);
+                    }}
+                  >
+                    {method.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* cash tendered input — only shows for cash payment */}
+              {paymentMethod === "cash" && (
+                <div className="cash-tendered">
+                  <label>Amount Tendered</label>
+                  <input
+                    type="number"
+                    placeholder="0.00"
+                    value={amountTendered}
+                    onChange={(e) => setAmountTendered(e.target.value)}
+                  />
+                  {/* show change due as soon as tendered >= total */}
+                  {Number(amountTendered) >= total && (
+                    <div className="change-due">
+                      <strong>
+                        Change Due: {currencySymbol}
+                        {changeDue.toFixed(2)}
+                      </strong>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <div className="payment-actions">
+                <button onClick={() => setShowPayment(false)}>Back</button>
+                <button
+                  className="complete-sale-btn"
+                  onClick={handleCompleteSale}
+                >
+                  Complete Sale
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* ── Sale complete screen ── */}
+          {saleComplete && (
+            <div className="sale-complete">
+              <h3>✅ Sale Complete</h3>
+              <p>
+                Total:{" "}
+                <strong>
+                  {currencySymbol}
+                  {total.toFixed(2)}
+                </strong>
+              </p>
+              <p>
+                Payment:{" "}
+                <strong>
+                  {paymentMethods.find((m) => m.id === paymentMethod)?.label}
+                </strong>
+              </p>
+              {paymentMethod === "cash" && (
+                <>
+                  <p>
+                    Tendered:{" "}
+                    <strong>
+                      {currencySymbol}
+                      {Number(amountTendered).toFixed(2)}
+                    </strong>
+                  </p>
+                  <p>
+                    Change:{" "}
+                    <strong>
+                      {currencySymbol}
+                      {changeDue.toFixed(2)}
+                    </strong>
+                  </p>
+                </>
+              )}
+              <button className="new-sale-btn" onClick={handleNewSale}>
+                New Sale
+              </button>
+            </div>
+          )}
+        </div>
       </div>
-    </div>
+    </>
   );
 }

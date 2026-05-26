@@ -1,8 +1,14 @@
 //screen to capture and setup settings
 import { useState, useEffect } from "react";
 import { getSetting, setSettings } from "../db/settingsDb";
+import { exitDemoMode, clearAllData } from "../db/seedData";
 
-export default function Settings({ storeName, setStoreName }) {
+export default function Settings({
+  storeName,
+  setStoreName,
+  demoMode,
+  setDemoMode,
+}) {
   //states
   const [diningTypes, setDiningTypes] = useState([]);
   const [paymentMethods, setPaymentMethods] = useState([]);
@@ -76,6 +82,25 @@ export default function Settings({ storeName, setStoreName }) {
       paymentMethods,
       //storeName,
     });
+  };
+
+  //handles exiting of demo mode
+  const handleExitDemoMode = async () => {
+    const confirmed = window.confirm(
+      "Are you sure you want to Exit Demo Mode? This will clear everything and set the POS to LIVE and cannot be undone!",
+    );
+    if (!confirmed) return;
+    await exitDemoMode();
+    setDemoMode(false);
+  };
+
+  //handles clearing of data for fresh installations
+  const handleStartFromScratch = async () => {
+    const confirmed = window.confirm(
+      "Start from Scratch? This will clear ALL data! Settings will be kept.",
+    );
+    if (!confirmed) return;
+    await clearAllData();
   };
 
   //render
@@ -163,6 +188,28 @@ export default function Settings({ storeName, setStoreName }) {
         <button className="add-btn" onClick={handleAddPaymentMethod}>
           Add
         </button>
+      </div>
+
+      {/* Data Management */}
+      <div className="settings-section">
+        <h3>Data Management</h3>
+        {demoMode && (
+          <div>
+            <button className="danger-btn" onClick={handleExitDemoMode}>
+              Exit Demo Mode
+            </button>
+            <p>Clears all demo data and marks your go-live date.</p>
+          </div>
+        )}
+        <div>
+          <button className="danger-btn" onClick={handleStartFromScratch}>
+            Start from Scratch
+          </button>
+          <p>
+            Clears all menu items, inventory, and transactions. Settings are
+            kept.
+          </p>
+        </div>
       </div>
 
       <button className="save-settings-btn" onClick={handleSaveSettings}>

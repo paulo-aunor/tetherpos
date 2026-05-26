@@ -741,3 +741,79 @@ td {
   padding: 20px;
   overflow-y: auto;
 }
+
+/* styling for demo data. Applicable in Demo Mode only */
+
+.demo-banner {
+  background: #fef3c7;
+  color: #92400e;
+  padding: 10px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 14px;
+  font-weight: 500;
+  border-bottom: 1px solid #fcd34d;
+}
+
+.demo-banner button {
+  padding: 6px 12px;
+  background: #92400e;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+/* First Run Setup */
+.first-run-setup-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  gap: 24px;
+}
+
+.demo-mode-wrapper,
+.fresh-start-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.demo-mode-btn,
+.fresh-start-btn {
+  padding: 12px 32px;
+  font-size: 1rem;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.demo-mode-btn {
+  background-color: #4a90e2;
+  color: white;
+}
+
+.fresh-start-btn {
+  background-color: #e8e8e8;
+  color: #333;
+}
+
+/* Danger Button */
+.danger-btn {
+  padding: 10px 24px;
+  font-size: 0.95rem;
+  background-color: #e53e3e;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.danger-btn:hover {
+  background-color: #c53030;
+}
